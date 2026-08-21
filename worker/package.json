@@ -1,0 +1,17 @@
+{
+  "name": "blog-like-worker",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute blog-like --remote --file=./schema.sql",
+    "db:init:local": "wrangler d1 execute blog-like --local --file=./schema.sql",
+    "test": "node test/worker.test.mjs",
+    "db:top": "wrangler d1 execute blog-like --remote --command=\"SELECT post_id, emoji, count FROM reactions ORDER BY count DESC LIMIT 30\""
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

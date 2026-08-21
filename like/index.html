@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Reactions</title>
+<style>
+  :root {
+    --fg: #37352f;
+    --sub: rgba(55, 53, 47, 0.45);
+    --line: rgba(55, 53, 47, 0.14);
+    --chip: rgba(55, 53, 47, 0.045);
+    --on-bg: rgba(35, 131, 226, 0.12);
+    --on-line: rgba(35, 131, 226, 0.55);
+    --on-fg: #2383e2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fg: #e9e9e7; --sub: rgba(233,233,231,.45);
+      --line: rgba(233,233,231,.18); --chip: rgba(233,233,231,.06);
+      --on-bg: rgba(82,156,226,.18); --on-line: rgba(82,156,226,.6); --on-fg: #6fb1ee;
+    }
+  }
+  html, body { margin: 0; padding: 0; background: transparent; }
+  body {
+    color: var(--fg);
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto,
+                 "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; min-height: 100vh; padding: 6px 8px; box-sizing: border-box;
+  }
+  .label { font-size: 13px; color: var(--sub); }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: var(--chip); color: var(--fg);
+    padding: 7px 14px 7px 12px; font: inherit; font-size: 14px;
+    line-height: 1; cursor: pointer;
+    transition: background .13s, border-color .13s, transform .08s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .chip:hover { border-color: rgba(55,53,47,.3); }
+  @media (prefers-color-scheme: dark) { .chip:hover { border-color: rgba(233,233,231,.35); } }
+  .chip:active { transform: scale(.94); }
+  .chip:disabled { cursor: default; opacity: .55; }
+  .chip.on { background: var(--on-bg); border-color: var(--on-line); color: var(--on-fg); }
+
+  .chip .emo { font-size: 17px; line-height: 1; display: inline-block; }
+  .chip .num { font-variant-numeric: tabular-nums; min-width: 1ch; text-align: left; }
+  .chip.pop .emo { animation: pop .38s ease; }
+  @keyframes pop {
+    0% { transform: scale(1); } 35% { transform: scale(1.4); }
+    65% { transform: scale(.9); } 100% { transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) { .chip.pop .emo { animation: none; } }
+
+  .msg {
+    display: none; font-size: 12px; line-height: 1.5; color: #92400e;
+    background: #fef3c7; border-radius: 6px; padding: 8px 12px;
+    max-width: 460px; text-align: center;
+  }
+  .msg.on { display: block; }
+  .demo {
+    display: none; font-size: 11px; color: var(--sub);
+  }
+  .demo.on { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="label" id="label">이 글 어떠셨나요?</div>
+  <div class="row" id="row"></div>
+  <div class="demo" id="demo">미리보기 모드 — 실제 카운트가 아닙니다</div>
+  <div class="msg" id="msg"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ═══════════════ 설정 ═══════════════ */
+
+  // Cloudflare Worker 배포 후 나온 주소로 바꾸세요 (끝에 슬래시 없이).
+  // 안 바꾸면 자동으로 "미리보기 모드"로 떠서 모양만 확인할 수 있습니다.
+  var API = "https://blog-like.<서브도메인>.workers.dev";
+
+  // 반응 종류. 여기 순서대로 화면에 나옵니다.
+  // key 는 worker/wrangler.toml 의 REACTIONS 와 반드시 같아야 합니다.
+  var EMOJIS = [
+    { key: "heart",    icon: "❤️", title: "좋아요" },
+    { key: "clap",     icon: "👏", title: "잘 봤어요" },
+    { key: "thumbsup", icon: "👍", title: "도움됐어요" },
+    { key: "exclaim",  icon: "❗", title: "놀라워요" },
+    { key: "fire",     icon: "🔥", title: "최고예요" }
+  ];
+
+  /* ════════════════════════════════════ */
+
+  var qs = new URLSearchParams(location.search);
+  var rowEl = document.getElementById("row");
+  var labelEl = document.getElementById("label");
+  var msgEl = document.getElementById("msg");
+  var demoEl = document.getElementById("demo");
+
+  var DEMO = API.indexOf("<") !== -1;
+  var id = (qs.get("id") || "").trim();
+
+  var label = qs.get("label");
+  if (label !== null) {
+    if (label === "") labelEl.style.display = "none";
+    else labelEl.textContent = label;
+  }
+
+  function warn(text) { msgEl.textContent = text; msgEl.className = "msg on"; }
+
+  if (!id && !DEMO) {
+    // id 없이 두면 모든 글이 같은 카운터를 공유하게 되므로 아예 막습니다.
+    labelEl.style.display = "none";
+    warn("id가 없습니다. 임베드 주소 끝에 ?id=글이름 을 붙여주세요. 예) .../like/?id=2026-onboarding");
+    return;
+  }
+  if (DEMO) { demoEl.className = "demo on"; id = id || "preview"; }
+
+  var LS_KEY = "reactions:" + id;
+  var state = { counts: {}, mine: [] };
+  var chips = {};
+  var busy = {};
+
+  EMOJIS.forEach(function (e) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.title = e.title;
+    b.disabled = !DEMO;
+    b.innerHTML = '<span class="emo">' + e.icon + '</span><span class="num">0</span>';
+    b.addEventListener("click", function () { toggle(e.key); });
+    rowEl.appendChild(b);
+    chips[e.key] = b;
+    state.counts[e.key] = 0;
+  });
+
+  function paint(popKey) {
+    EMOJIS.forEach(function (e) {
+      var b = chips[e.key];
+      var n = state.counts[e.key] || 0;
+      var on = state.mine.indexOf(e.key) !== -1;
+      b.querySelector(".num").textContent = n;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.setAttribute("aria-label", e.title + " " + n + "개" + (on ? ", 누름" : ""));
+      if (e.key === popKey) {
+        b.classList.remove("pop");
+        void b.offsetWidth;
+        b.classList.add("pop");
+      }
+    });
+  }
+
+  function apply(data) {
+    if (!data || !data.counts) return;
+    EMOJIS.forEach(function (e) { state.counts[e.key] = data.counts[e.key] || 0; });
+    state.mine = Array.isArray(data.mine) ? data.mine : [];
+  }
+
+  function remember() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (err) {}
+  }
+
+  // 서버 응답 전에 이전 상태를 먼저 그려 깜빡임을 줄입니다.
+  try {
+    var cached = JSON.parse(localStorage.getItem(LS_KEY) || "null");
+    if (cached) { apply(cached); }
+  } catch (err) {}
+  paint();
+
+  function localToggle(key) {
+    var i = state.mine.indexOf(key);
+    if (i === -1) { state.mine.push(key); state.counts[key] = (state.counts[key] || 0) + 1; }
+    else { state.mine.splice(i, 1); state.counts[key] = Math.max((state.counts[key] || 0) - 1, 0); }
+  }
+
+  function toggle(key) {
+    if (busy[key]) return;
+
+    if (DEMO) { localToggle(key); paint(key); remember(); return; }
+
+    busy[key] = true;
+    var snapshot = JSON.stringify(state);
+
+    localToggle(key);          // 낙관적 업데이트: 먼저 반응하고 서버 응답으로 보정
+    paint(key);
+
+    fetch(API + "/api/reactions?id=" + encodeURIComponent(id) + "&emoji=" + encodeURIComponent(key),
+          { method: "POST", credentials: "omit" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) throw new Error(d.error);
+        apply(d); paint(); remember();
+      })
+      .catch(function () {
+        state = JSON.parse(snapshot); paint();
+        warn("잠시 후 다시 시도해주세요.");
+      })
+      .then(function () { busy[key] = false; });
+  }
+
+  function load() {
+    if (DEMO) return;
+    fetch(API + "/api/reactions?id=" + encodeURIComponent(id), { credentials: "omit" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) throw new Error(d.error);
+        apply(d); paint(); remember();
+        EMOJIS.forEach(function (e) { chips[e.key].disabled = false; });
+      })
+      .catch(function () {
+        warn("반응 서버에 연결하지 못했습니다. Worker 주소와 ALLOWED_ORIGINS 설정을 확인해주세요.");
+      });
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
