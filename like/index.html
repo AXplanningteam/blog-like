@@ -33,14 +33,14 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 10px; min-height: 100vh; padding: 6px 8px; box-sizing: border-box;
   }
-  .label { font-size: 13px; color: var(--sub); }
-  .row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .label { font-size: 15px; color: var(--sub); }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 
   .chip {
     display: inline-flex; align-items: center; gap: 7px;
     border: 1px solid var(--line); border-radius: 999px;
     background: var(--chip); color: var(--fg);
-    padding: 7px 14px 7px 12px; font: inherit; font-size: 14px;
+    padding: 10px 18px 10px 15px; font: inherit; font-size: 17px;
     line-height: 1; cursor: pointer;
     transition: background .13s, border-color .13s, transform .08s;
     -webkit-tap-highlight-color: transparent;
@@ -51,7 +51,7 @@
   .chip:disabled { cursor: default; opacity: .55; }
   .chip.on { background: var(--on-bg); border-color: var(--on-line); color: var(--on-fg); }
 
-  .chip .emo { font-size: 17px; line-height: 1; display: inline-block; }
+  .chip .emo { font-size: 24px; line-height: 1; display: inline-block; }
   .chip .num { font-variant-numeric: tabular-nums; min-width: 1ch; text-align: left; }
   .chip.pop .emo { animation: pop .38s ease; }
   @keyframes pop {
