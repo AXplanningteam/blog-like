@@ -7,9 +7,9 @@
 <title>Reactions</title>
 <style>
   :root {
-    --fg: #37352f;
+    --fg: #111111;
     --sub: rgba(55, 53, 47, 0.45);
-    --line: rgba(55, 53, 47, 0.14);
+    --line: rgba(55, 53, 47, 0.25);
     --chip: rgba(55, 53, 47, 0.045);
     --on-bg: rgba(35, 131, 226, 0.12);
     --on-line: rgba(35, 131, 226, 0.55);
@@ -52,7 +52,7 @@
   .chip.on { background: var(--on-bg); border-color: var(--on-line); color: var(--on-fg); }
 
   .chip .emo { font-size: 24px; line-height: 1; display: inline-block; }
-  .chip .num { font-variant-numeric: tabular-nums; min-width: 1ch; text-align: left; }
+  .chip .num { font-variant-numeric: tabular-nums; min-width: 1ch; text-align: left; font-weight: 600; }
   .chip.pop .emo { animation: pop .38s ease; }
   @keyframes pop {
     0% { transform: scale(1); } 35% { transform: scale(1.4); }
