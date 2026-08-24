@@ -15,13 +15,8 @@
     --on-line: rgba(35, 131, 226, 0.55);
     --on-fg: #2383e2;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --fg: #e9e9e7; --sub: rgba(233,233,231,.45);
-      --line: rgba(233,233,231,.18); --chip: rgba(233,233,231,.06);
-      --on-bg: rgba(82,156,226,.18); --on-line: rgba(82,156,226,.6); --on-fg: #6fb1ee;
-    }
-  }
+  /* 다크 모드 미지원: 위젯은 항상 흰 바탕 블로그 위에 놓이므로
+     시스템 다크 모드를 따라가면 글자가 흰 바탕에 묻혀 안 보임 */
   html, body { margin: 0; padding: 0; background: transparent; }
   body {
     color: var(--fg);
@@ -46,7 +41,6 @@
     -webkit-tap-highlight-color: transparent;
   }
   .chip:hover { border-color: rgba(55,53,47,.3); }
-  @media (prefers-color-scheme: dark) { .chip:hover { border-color: rgba(233,233,231,.35); } }
   .chip:active { transform: scale(.94); }
   .chip:disabled { cursor: default; opacity: .55; }
   .chip.on { background: var(--on-bg); border-color: var(--on-line); color: var(--on-fg); }
