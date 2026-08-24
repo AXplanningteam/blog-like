@@ -5,7 +5,7 @@ compatibility_date = "2026-08-01"
 # ── 아래 두 곳을 우리 환경에 맞게 바꾸세요 ────────────────────────
 [vars]
 # 좋아요 버튼 페이지가 올라간 주소들. 여기 없는 곳에서 오는 요청은 막힙니다.
-ALLOWED_ORIGINS = "https://axplanningteam.github.io"
+ALLOWED_ORIGINS = "https://axplanningteam.github.io,https://daoukiwoom.ai"
 
 # 반응 종류. like/index.html 의 EMOJIS key 와 반드시 같아야 합니다.
 REACTIONS = "heart,clap,thumbsup,exclaim,fire"
